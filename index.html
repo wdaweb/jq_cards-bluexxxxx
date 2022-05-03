@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    body {
+      background: url('./素材/1.jpg');
+    }
+
+    p {
+      color: blue;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px;
+      font-weight: bolder;
+    }
+
+    #btn-start,
+    #btn-start2,
+    #btn-start3 {
+      width: 90px;
+      height: 90px;
+      margin-right: 80px;
+      border-radius: 50%;
+      border: none;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+    }
+
+    #btn-start {
+      background-image: url('./素材/精靈球.png');
+    }
+
+    #btn-start2 {
+      background-image: url('./素材/超級球.png');
+    }
+
+    #btn-start3 {
+      background-image: url('./素材/高級球.png');
+    }
+
+    #btn-start,
+    #btn-start2,
+    #btn-start3:hover {
+      cursor: pointer;
+    }
+
+    #btn-start:hover {
+      background-image: url('./素材/精靈球開.png');
+    }
+
+    #btn-start2:hover {
+      background-image: url('./素材/超級球開.png');
+    }
+
+    #btn-start3:hover {
+      background-image: url('./素材/高級球開.png');
+    }
+
+    .card {
+      width: 100px;
+      height: 180px;
+      position: relative;
+      /* 設定子元素在3D空間內 */
+      transform-style: preserve-3d;
+      float: left;
+      margin: 20px;
+      transition: transform 1s;
+    }
+
+    .card-back:hover {
+      cursor: pointer;
+
+    }
+
+    .card-front {
+      width: 100%;
+      height: 100%;
+      background-image: url('./素材/1.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      position: absolute;
+      /* 轉180度 */
+      transform: rotateY(180deg);
+      /* 翻過來後隱藏另一面 */
+      backface-visibility: hidden;
+
+    }
+
+    .card-back {
+      width: 100%;
+      height: 100%;
+      background-image: url('./素材/card-back.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      position: absolute;
+      /* 翻過來後隱藏另一面 */
+      backface-visibility: hidden;
+    }
+
+    .card-open {
+      transform: rotateY(180deg);
+    }
+
+    .card-ok {
+      user-select: none;
+      -webkit-user-drag: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+    }
+
+    #game {
+      width: 1200px;
+      margin: auto;
+      background: rgba(0, 0, 0, 0.5);
+    }
+  </style>
+
+</head>
+
+<body>
+  <input type="button" id="btn-start">
+  <input type="button" id="btn-start2">
+  <input type="button" id="btn-start3">
+  <p>剩餘:<span id='text-time'>0</span>秒</p>
+  <div id="game"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+
+    $("#btn-start").click(function () {
+      $(this).attr('disabled', true)
+      $('#btn-start2').attr('disabled', true)
+      $('#btn-start3').attr('disabled', true)
+      countdown = 120
+      $('text-time').text(countdown)
+
+
+
+      // 產生16張卡片
+      for (let i = 0; i < 16; i++) {
+        $('#game').append(`
+        <div class="card">
+          <div class="card-front"></div>
+          <div class="card-back"></div>
+        </div>
+      `)
+      }
+
+
+
+      for (let i = 0; i < 16; i++) {
+        // 決定數字 1-8兩次
+        const num = i % 16 + 1
+        $('.card').eq(i).find('.card-front').css('background-image', `url(./素材/${num}.png)`)
+        $('.card').eq(i).attr('data-card', num)
+
+
+
+        // 打散
+        const target = Math.round(Math.random() * 15)
+        $('.card').eq(target).insertAfter($('.card').eq(i))
+      }
+
+      // 翻牌
+      $('#game').on('click', '.card', function () {
+        // 最多一次翻兩張，且這張牌還沒翻開
+        if ($('.card-open').length < 2 && !$(this).hasClass('card-open')) {
+          $(this).addClass('card-open')
+        }
+
+        // 如果翻開兩張
+        if ($('.card-open').length === 2) {
+          // 如果數字相減絕對值=8
+          if (Math.abs($('.card-open').eq(0).attr('data-card') - $('.card-open').eq(1).attr('data-card')) == 8) {
+            // 用 class 標記已完成
+            $('.card-open').addClass('card-ok')
+            // 將 .card-front 淡出，如果對 .card-open 淡出會把 3D 壓平只看到卡背
+            $('.card-open .card-front').fadeTo(1000, 0)
+          }
+
+          // 不管是否一樣都將卡片翻回
+          setTimeout(function () {
+            // 如果 .card-open 裡的 .card-front 透明度不是 1，把 .card-open 透明度設為 0
+            $('.card-open').each(function () {
+              if ($(this).find('.card-front').css('opacity') !== '1') {
+                $(this).css('opacity', 0)
+              }
+            })
+            $('.card-open').removeClass('card-open')
+
+            if ($('.card-ok').length === 16) {
+              clearInterval(timer)
+              $('#game .card').remove()
+              $('#btn-start').attr('disabled', false)
+              $('#btn-start2').attr('disabled', false)
+              $('#btn-start3').attr('disabled', false)
+              swal.fire({
+                title: '恭喜過關'
+              })
+            }
+          }, 1000)
+        }
+      })
+
+      timer = setInterval(function () {
+        countdown--
+        $('#text-time').text(countdown)
+
+
+        if (countdown <= 0) {
+          clearInterval(timer)
+          $('#game .card').remove()
+          $('#btn-start').attr('disabled', false)
+          $('#btn-start2').attr('disabled', false)
+          $('#btn-start3').attr('disabled', false)
+          Swal.fire({
+            title: '很遺憾,遊戲結束',
+            icon: 'error'
+          })
+        }
+
+      }, 1000)
+    })
+
+
+
+
+
+    // 中等
+    $("#btn-start2").click(function () {
+      $(this).attr('disabled', true)
+      $('#btn-start').attr('disabled', true)
+      $('#btn-start3').attr('disabled', true)
+      countdown = 150
+      $('text-time').text(countdown)
+
+
+
+      for (let i = 0; i < 24; i++) {
+        $('#game').append(`
+        <div class="card">
+          <div class="card-front"></div>
+          <div class="card-back"></div>
+        </div>
+      `)
+      }
+
+
+
+      for (let i = 0; i < 24; i++) {
+        const num = i % 24 + 1
+        $('.card').eq(i).find('.card-front').css('background-image', `url(./素材2/${num}.png)`)
+        $('.card').eq(i).attr('data-card', num)
+
+
+
+        // 打散
+        const target = Math.round(Math.random() * 23)
+        $('.card').eq(target).insertAfter($('.card').eq(i))
+      }
+
+      // 翻牌
+      $('#game').on('click', '.card', function () {
+        // 最多一次翻兩張，且這張牌還沒翻開
+        if ($('.card-open').length < 2 && !$(this).hasClass('card-open')) {
+          $(this).addClass('card-open')
+        }
+
+        // 如果翻開兩張
+        if ($('.card-open').length === 2) {
+          // 數字相減絕對值=12
+          if (Math.abs($('.card-open').eq(0).attr('data-card') - $('.card-open').eq(1).attr('data-card')) == 12) {
+            // 用 class 標記已完成
+            $('.card-open').addClass('card-ok')
+            // 將 .card-front 淡出，如果對 .card-open 淡出會把 3D 壓平只看到卡背
+            $('.card-open .card-front').fadeTo(1000, 0)
+          }
+
+          // 不管是否一樣都將卡片翻回
+          setTimeout(function () {
+            // 如果 .card-open 裡的 .card-front 透明度不是 1，把 .card-open 透明度設為 0
+            $('.card-open').each(function () {
+              if ($(this).find('.card-front').css('opacity') !== '1') {
+                $(this).css('opacity', 0)
+              }
+            })
+            $('.card-open').removeClass('card-open')
+
+            if ($('.card-ok').length === 24) {
+              clearInterval(timer)
+              $('#game .card').remove()
+              $('#btn-start').attr('disabled', false)
+              $('#btn-start2').attr('disabled', false)
+              $('#btn-start3').attr('disabled', false)
+              swal.fire({
+                title: '恭喜過關'
+              })
+            }
+          }, 1000)
+        }
+      })
+
+      timer = setInterval(function () {
+        countdown--
+        $('#text-time').text(countdown)
+
+
+        if (countdown <= 0) {
+          clearInterval(timer)
+          $('#game .card').remove()
+          $('#btn-start').attr('disabled', false)
+          $('#btn-start2').attr('disabled', false)
+          $('#btn-start3').attr('disabled', false)
+          Swal.fire({
+            title: '很遺憾,遊戲結束',
+            icon: 'error'
+          })
+        }
+
+      }, 1000)
+    })
+
+
+
+    // 困難
+    $("#btn-start3").click(function () {
+      $(this).attr('disabled', true)
+      $('#btn-start').attr('disabled', true)
+      $('#btn-start2').attr('disabled', true)
+      countdown = 180
+      $('text-time').text(countdown)
+
+
+
+      for (let i = 0; i < 32; i++) {
+        $('#game').append(`
+        <div class="card">
+          <div class="card-front"></div>
+          <div class="card-back"></div>
+        </div>
+      `)
+      }
+
+
+
+      for (let i = 0; i < 32; i++) {
+        const num = i % 32 + 1
+        $('.card').eq(i).find('.card-front').css('background-image', `url(./素材3/${num}.png)`)
+        $('.card').eq(i).attr('data-card', num)
+
+
+
+        // 打散
+        const target = Math.round(Math.random() * 31)
+        $('.card').eq(target).insertAfter($('.card').eq(i))
+      }
+
+      // 翻牌
+      $('#game').on('click', '.card', function () {
+        // 最多一次翻兩張，且這張牌還沒翻開
+        if ($('.card-open').length < 2 && !$(this).hasClass('card-open')) {
+          $(this).addClass('card-open')
+        }
+
+        // 如果翻開兩張
+        if ($('.card-open').length === 2) {
+          // 如果數字相減絕對值=16
+          if (Math.abs($('.card-open').eq(0).attr('data-card') - $('.card-open').eq(1).attr('data-card')) == 16) {
+            // 用 class 標記已完成
+            $('.card-open').addClass('card-ok')
+            // 將 .card-front 淡出，如果對 .card-open 淡出會把 3D 壓平只看到卡背
+            $('.card-open .card-front').fadeTo(1000, 0)
+          }
+
+          // 不管是否一樣都將卡片翻回
+          setTimeout(function () {
+            // 如果 .card-open 裡的 .card-front 透明度不是 1，把 .card-open 透明度設為 0
+            $('.card-open').each(function () {
+              if ($(this).find('.card-front').css('opacity') !== '1') {
+                $(this).css('opacity', 0)
+              }
+            })
+            $('.card-open').removeClass('card-open')
+
+            if ($('.card-ok').length === 32) {
+              clearInterval(timer)
+              $('#game .card').remove()
+              $('#btn-start').attr('disabled', false)
+              $('#btn-start2').attr('disabled', false)
+              $('#btn-start3').attr('disabled', false)
+              swal.fire({
+                title: '恭喜過關'
+              })
+            }
+          }, 1000)
+        }
+      })
+
+      timer = setInterval(function () {
+        countdown--
+        $('#text-time').text(countdown)
+
+
+        if (countdown <= 0) {
+          clearInterval(timer)
+          $('#game .card').remove()
+          $('#btn-start').attr('disabled', false)
+          $('#btn-start2').attr('disabled', false)
+          $('#btn-start3').attr('disabled', false)
+          Swal.fire({
+            title: '很遺憾,遊戲結束',
+            icon: 'error'
+          })
+        }
+
+      }, 1000)
+    })
+
+  </script>
+</body>
+
+</html>
